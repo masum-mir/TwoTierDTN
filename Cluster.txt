@@ -1,0 +1,226 @@
+#
+# Default settings for the simulation
+#
+## Scenario
+Scenario.name = default_%%Group.router%%_%%MovementModel.rngSeed%%_%%Group.msgTtl%%_%%Group.bufferSize%%
+Scenario.simulateConnections = true
+Scenario.updateInterval = 0.1
+Scenario.endTime = 13200
+
+## Interfaces
+btInterface.type = SimpleBroadcastInterface
+btInterface.transmitSpeed = 24M
+btInterface.transmitRange = 30
+highspeedInterface.type = SimpleBroadcastInterface
+highspeedInterface.transmitSpeed = 120M
+highspeedInterface.transmitRange = 150
+
+
+highspeedInterfaceT.type = SimpleBroadcastInterface
+highspeedInterfaceT.transmitSpeed = 120M
+highspeedInterfaceT.transmitRange = 750
+
+highspeedInterfaceM.type = SimpleBroadcastInterface
+highspeedInterfaceM.transmitSpeed = 120M
+highspeedInterfaceM.transmitRange = 250
+
+
+
+Scenario.nrofHostGroups = 11
+
+#2x3x5x7=210
+MovementModel.rngSeed = [17;57]
+## Common defaults
+Group.movementModel = ShortestPathMapBasedMovement
+Group.router = [TwoTierRouter;DirectDeliveryRouter;ProphetRouter]
+# FIX-A: was 20M — buffer overflowed causing 421k drops
+Group.bufferSize = [32M;64M;128M;256M;512M]
+Group.waitTime = 0, 120
+Group.nrofInterfaces = 1
+Group.interface1 = btInterface
+Group.speed = 0.5, 1.5
+Group.msgTtl = [150;200;250;300;350;400;450]
+Group.nrofHosts = 40
+
+#40+40+40+2+8+1+1+1+4=
+## Group 1 — Pedestrians near Tower T9 (1300,500)
+Group1.groupID = p
+Group1.speed = 0.5, 1.5
+Group1.nrofInterfaces = 1
+Group1.bufferSize = 200M
+Group1.interface1 = btInterface
+
+
+## Group 2 — Cars near Tower T8 (2600,2200)
+Group2.groupID = c
+Group2.okMaps = 1
+Group2.speed = 2, 14
+Group2.nrofInterfaces = 1
+Group2.bufferSize = 200M
+Group2.interface1 = btInterface
+
+## Group 3 — Pedestrians near Tower T10 (2314,1283)
+Group3.groupID = w
+Group3.speed = 0.5, 1.5
+Group3.bufferSize = 200M
+Group3.nrofInterfaces = 1
+Group3.interface1 = btInterface
+
+## Group 4 — Tram
+Group4.groupID = z
+Group4.bufferSize = 200M
+Group4.movementModel = MapRouteMovement
+Group4.routeFile = data/tram3.wkt
+Group4.routeType = 1
+Group4.waitTime = 10, 30
+Group4.speed = 7, 10
+Group4.nrofHosts = 0
+Group4.nrofInterfaces = 1
+Group4.interface1 = btInterface
+
+
+## Group 5 — Primary Drones
+Group5.groupID = M
+Group5.bufferSize = 300M
+Group5.movementModel = StationaryMovement
+Group5.nrofHosts = 1
+Group5.nodeLocation = 918, 1494
+# FIX-D: was 0,5 — reduce hover time so drone visits more towers
+Group5.waitTime = 0, 2
+Group5.nrofHosts = 1
+Group5.nrofInterfaces = 1
+Group5.interface1 = highspeedInterfaceM
+
+## Groups 6-11 — Static Towers
+Group6.groupID = T
+Group6.movementModel = StationaryMovement
+Group6.nrofHosts = 1
+Group6.nodeLocation = 1249, 620
+Group6.nrofInterfaces = 2
+Group6.interface1 = btInterface
+Group6.interface2 = highspeedInterfaceT
+Group6.bufferSize = 2G
+Group6.speed = 0, 0
+
+Group7.groupID = T
+Group7.movementModel = StationaryMovement
+Group7.nrofHosts = 1
+Group7.nodeLocation = 3043, 793
+Group7.nrofInterfaces = 2
+Group7.interface1 = btInterface
+Group7.interface2 = highspeedInterfaceT
+Group7.bufferSize = 2G
+Group7.speed = 0, 0
+
+Group8.groupID = T
+Group8.movementModel = StationaryMovement
+Group8.nrofHosts = 1
+Group8.nodeLocation = 806, 2407
+Group8.bufferSize = 2G
+Group8.speed = 0, 0
+Group8.nrofInterfaces = 2
+Group8.interface1 = btInterface
+Group8.interface2 = highspeedInterfaceT
+
+Group9.groupID = T
+Group9.movementModel = StationaryMovement
+Group9.nrofHosts = 1
+Group9.nodeLocation = 3061, 2446
+Group9.nrofInterfaces = 2
+Group9.interface1 = btInterface
+Group9.interface2 = highspeedInterfaceT
+Group9.bufferSize = 2G
+Group9.speed = 0, 0
+
+## Group 10 — Primary Drones
+Group10.groupID = D
+Group10.bufferSize = 300M
+Group10.movementModel = MapRouteMovement
+Group10.routeFile = data/NewRoute.wkt
+Group10.routeType = 1
+Group10.speed = 4, 6
+Group10.waitTime = 0, 2
+Group10.nrofHosts = 4
+Group10.nrofInterfaces = 1
+Group10.interface1 = highspeedInterface
+
+
+
+## Group 11 — Primary Drones
+Group11.groupID = M
+Group11.bufferSize = 300M
+Group11.movementModel = StationaryMovement
+Group11.nrofHosts = 1
+Group11.nodeLocation = 2995, 1630
+# FIX-D: was 0,5 — reduce hover time so drone visits more towers
+Group11.waitTime = 0, 2
+Group11.nrofHosts = 1
+Group11.nrofInterfaces = 1
+Group11.interface1 = highspeedInterfaceM
+
+
+## TwoTierRouterAdvanced settings
+# Immunity window: a node ignores a message it already forwarded for this
+# many seconds. Prevents re-flooding on every contact.
+TwoTierRouterAdvanced.immunityTime = 600
+# Custody fraction: newly-received messages are protected from buffer
+# eviction for (immunityTime * custodyFraction) = 300 seconds.
+TwoTierRouterAdvanced.custodyFraction = 0.5
+## Message creation
+Events.nrof = 1
+Events1.class = MessageEventGenerator
+# FIX-C: was 25-35s — too many messages caused buffer collapse
+#         at overhead_ratio=739. Back to 80-120s to reduce pressure.
+Events1.interval = 120, 180
+Events1.size = 100k, 300k
+Events1.hosts = 0, 126
+Events1.prefix = M
+## Movement
+MovementModel.worldSize = 4500, 3400
+MovementModel.warmup = 1000
+
+## Map files
+MapBasedMovement.nrofMapFiles = 5
+MapBasedMovement.mapFile1 = data/roads.wkt
+MapBasedMovement.mapFile2 = data/main_roads.wkt
+MapBasedMovement.mapFile3 = data/pedestrian_paths.wkt
+MapBasedMovement.mapFile4 = data/shops.wkt
+MapBasedMovement.mapFile5 = data/ParkPOIs.wkt
+
+
+## Reports
+Report.nrofReports = 3
+Report.warmup = 0
+Report.reportDir = reports/
+Report.report1 = MessageStatsReport
+Report.report2 = MessageGraphvizReport
+Report.report3 = EnergyLevelReport
+
+
+## Energy Model
+## random range 50-100
+Group.initialEnergy = 4800
+Group.scanEnergy = 0.05
+Group.scanResponseEnergy = 0.02
+Group.transmitEnergy = 0.001
+Group.energyWarmup = 0
+Report.granularity = 100
+EnergyLevelReport.granularity = 100
+
+
+
+## Router parameters
+ProphetRouter.secondsInTimeUnit = 30
+SprayAndWaitRouter.nrofCopies = 6
+SprayAndWaitRouter.binaryMode = true
+## Optimisation
+Optimization.cellSizeMult = 5
+Optimization.randomizeUpdateOrder = true
+## GUI
+GUI.UnderlayImage.fileName = data/helsinki_underlay.png
+GUI.UnderlayImage.offset = 64, 20
+GUI.UnderlayImage.scale = 4.75
+GUI.UnderlayImage.rotate = -0.015
+GUI.EventLogPanel.nrofEvents = 100
+
+
